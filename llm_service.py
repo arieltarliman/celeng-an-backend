@@ -16,12 +16,16 @@ else:
 
 PROMPT = """
 You are a receipt parsing engine.
-Analyze the image and return a JSON object with fields:
-merchant, date, items, total_amount.
+Analyze the image and return a JSON object with these exact fields:
+- merchant (string): Store name
+- date (string): Transaction date in YYYY-MM-DD format
+- items (array): Each item has {name, qty, price, total}
+- total_amount (integer): Grand total in smallest currency unit
+
+Return ONLY valid JSON. No explanations.
 """
 
 def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
-
     if not client:
         return {
             "merchant": "CONFIG ERROR",
@@ -32,15 +36,12 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
         }
 
     try:
+        # FIX: Use keyword arguments for Part methods
         response = client.models.generate_content(
-            model="models/gemini-1.5-flash",
+            model="gemini-1.5-flash",
             contents=[
-                types.Content(
-                    parts=[
-                        types.Part.from_text(PROMPT),
-                        types.Part.from_bytes(image_bytes, mime_type)
-                    ]
-                )
+                types.Part.from_text(text=PROMPT),
+                types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
             ],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -49,8 +50,11 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
 
         raw_json = response.text.strip()
 
+        # Clean markdown code blocks if present
         if raw_json.startswith("```json"):
             raw_json = raw_json.replace("```json", "").replace("```", "")
+        if raw_json.startswith("```"):
+            raw_json = raw_json.replace("```", "")
 
         return json.loads(raw_json)
 
