@@ -9,6 +9,7 @@ load_dotenv()
 # 1. Setup the Client
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 client = None
+client = genai.Client(api_key=GEMINI_API_KEY, default_model="gemini-1.5-flash")
 
 if GEMINI_API_KEY:
     # We explicitly set the version to 'v1alpha' if v1beta fails, 
@@ -58,7 +59,7 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
         # FIX IS HERE: Changed model name to 'gemini-1.5-flash-latest'
         # This forces it to find the current active version.
         response = client.models.generate_content(
-            model="gemini-1.5-flash-latest", 
+            model="gemini-1.5-flash",
             contents=[
                 types.Content(
                     parts=[

@@ -4,4 +4,4 @@ python-multipart
 supabase
 pydantic
 python-dotenv
-google-genai
+google-genai>=1.2.0
