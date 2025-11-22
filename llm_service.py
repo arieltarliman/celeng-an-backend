@@ -16,28 +16,12 @@ else:
 
 PROMPT = """
 You are a receipt parsing engine.
-Analyze the image and return a JSON object with exactly these fields:
-{
-  "merchant": "Store Name",
-  "date": "YYYY-MM-DD",
-  "items": [
-      {
-        "name": "Item Name",
-        "qty": 1,
-        "price": 1000,
-        "total": 1000
-      }
-  ],
-  "total_amount": 0
-}
-Rules:
-- price is unit price (integer)
-- total = qty * price
-- if date missing, use today
-- ignore tax/service
+Analyze the image and return a JSON object with fields:
+merchant, date, items, total_amount.
 """
 
 def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
+
     if not client:
         return {
             "merchant": "CONFIG ERROR",
@@ -54,7 +38,7 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
                 types.Content(
                     parts=[
                         types.Part.from_text(PROMPT),
-                        types.Part.from_bytes(image_bytes, mime_type=mime_type)
+                        types.Part.from_bytes(image_bytes, mime_type)
                     ]
                 )
             ],
