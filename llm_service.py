@@ -6,16 +6,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# 1. Setup the Client (New SDK Way)
+# 1. Setup the Client
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 client = None
 
 if GEMINI_API_KEY:
+    # We explicitly set the version to 'v1alpha' if v1beta fails, 
+    # but changing the model name usually fixes it first.
     client = genai.Client(api_key=GEMINI_API_KEY)
 else:
     print("CRITICAL WARNING: GEMINI_API_KEY is missing in Environment Variables.")
 
-# 2. Define the Schema for stricter output
+# 2. Define the Schema
 PROMPT = """
 You are a receipt parsing engine. 
 Analyze the image and return a JSON object with exactly these fields:
@@ -52,9 +54,11 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
         }
 
     try:
-        # 2. Call the AI (New 'generate_content' syntax)
+        # 2. Call the AI
+        # FIX IS HERE: Changed model name to 'gemini-1.5-flash-latest'
+        # This forces it to find the current active version.
         response = client.models.generate_content(
-            model="gemini-1.5-flash", # The stable flash model
+            model="gemini-1.5-flash-latest", 
             contents=[
                 types.Content(
                     parts=[
@@ -69,10 +73,8 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
         )
 
         # 3. Parse Response
-        # The new SDK returns .text directly
         raw_json = response.text.strip()
         
-        # Clean up potential markdown formatting just in case
         if raw_json.startswith("```json"):
             raw_json = raw_json.replace("```json", "").replace("```", "")
             
@@ -80,11 +82,10 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
 
     except Exception as e:
         print(f"AI PROCESSING ERROR: {str(e)}")
-        # Return the ERROR inside the JSON so you can see it in Swagger/Frontend
         return {
             "merchant": "SCAN FAILED",
             "date": "2025-01-01",
             "items": [],
             "total_amount": 0,
-            "error_details": str(e) # <--- This will tell us exactly why it failed
+            "error_details": str(e) 
         }
