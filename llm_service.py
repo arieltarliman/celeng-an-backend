@@ -36,8 +36,8 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
             contents=[
                 types.Content(
                     parts=[
-                        types.Part.from_text(PROMPT),
-                        types.Part.from_bytes(image_bytes, mime_type)
+                        types.Part.from_text(text=PROMPT),
+                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
                     ]
                 )
             ],
