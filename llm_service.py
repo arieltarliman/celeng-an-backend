@@ -33,7 +33,7 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
 
     try:
         response = client.models.generate_content(
-            model="gemini-1.5-inigabrubah gay",
+            model="models/gemini-2.5-flash",
             contents=[
                 types.Content(
                     parts=[
