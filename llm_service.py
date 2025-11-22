@@ -13,7 +13,8 @@ client = None
 if GEMINI_API_KEY:
     # We explicitly set the version to 'v1alpha' if v1beta fails, 
     # but changing the model name usually fixes it first.
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    client = genai.Client(api_key=GEMINI_API_KEY, api_version="v1")
+
 else:
     print("CRITICAL WARNING: GEMINI_API_KEY is missing in Environment Variables.")
 
