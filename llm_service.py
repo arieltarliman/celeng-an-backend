@@ -6,21 +6,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# 1. Setup the Client
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 client = None
 
 if GEMINI_API_KEY:
-    # We explicitly set the version to 'v1alpha' if v1beta fails, 
-    # but changing the model name usually fixes it first.
     client = genai.Client(api_key=GEMINI_API_KEY)
-
 else:
-    print("CRITICAL WARNING: GEMINI_API_KEY is missing in Environment Variables.")
+    print("CRITICAL WARNING: GEMINI_API_KEY is missing.")
 
-# 2. Define the Schema
 PROMPT = """
-You are a receipt parsing engine. 
+You are a receipt parsing engine.
 Analyze the image and return a JSON object with exactly these fields:
 {
   "merchant": "Store Name",
@@ -29,42 +24,37 @@ Analyze the image and return a JSON object with exactly these fields:
       {
         "name": "Item Name",
         "qty": 1,
-        "price": 1000, 
+        "price": 1000,
         "total": 1000
       }
   ],
   "total_amount": 0
 }
-
 Rules:
-- "price" is the unit price (integer).
-- "total" is qty * price (integer).
-- If date is missing, use today's date.
-- Ignore tax/service charge in the item list.
+- price is unit price (integer)
+- total = qty * price
+- if date missing, use today
+- ignore tax/service
 """
 
 def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
-    # 1. Check API Key
     if not client:
         return {
             "merchant": "CONFIG ERROR",
             "date": "2025-01-01",
             "items": [],
             "total_amount": 0,
-            "error_details": "GEMINI_API_KEY not found on Server"
+            "error_details": "Missing GEMINI_API_KEY"
         }
 
     try:
-        # 2. Call the AI
-        # FIX IS HERE: Changed model name to 'gemini-1.5-flash-latest'
-        # This forces it to find the current active version.
         response = client.models.generate_content(
             model="models/gemini-1.5-flash",
             contents=[
                 types.Content(
                     parts=[
-                        types.Part.from_text(text=PROMPT),
-                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                        types.Part.from_text(PROMPT),
+                        types.Part.from_bytes(image_bytes, mime_type=mime_type)
                     ]
                 )
             ],
@@ -73,20 +63,19 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
             )
         )
 
-        # 3. Parse Response
         raw_json = response.text.strip()
-        
+
         if raw_json.startswith("```json"):
             raw_json = raw_json.replace("```json", "").replace("```", "")
-            
+
         return json.loads(raw_json)
 
     except Exception as e:
-        print(f"AI PROCESSING ERROR: {str(e)}")
+        print("AI PROCESSING ERROR:", e)
         return {
             "merchant": "SCAN FAILED",
             "date": "2025-01-01",
             "items": [],
             "total_amount": 0,
-            "error_details": str(e) 
+            "error_details": str(e)
         }
