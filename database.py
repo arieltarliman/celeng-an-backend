@@ -11,3 +11,12 @@ if not url or not key:
     raise ValueError("Supabase credentials not found in .env file")
 
 supabase: Client = create_client(url, key)
+
+def get_user_client(token: str) -> Client:
+    """
+    Creates a new Supabase client authenticated as the specific user.
+    This allows Row Level Security (RLS) to work.
+    """
+    client = create_client(url, key)
+    client.postgrest.auth(token)
+    return client
