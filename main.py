@@ -54,6 +54,7 @@ class ScanResult(BaseModel):
     date: str
     items: List[ReceiptItem]
     total_amount: int
+    error_details: str | None = None  
 
 # 4. ENDPOINTS
 
