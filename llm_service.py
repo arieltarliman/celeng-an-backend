@@ -38,7 +38,7 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
     try:
         # FIX: Use keyword arguments for Part methods
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="models/gemini-1.5-flash",
             contents=[
                 types.Part.from_text(text=PROMPT),
                 types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
