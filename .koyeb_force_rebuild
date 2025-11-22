@@ -1,1 +1,4 @@
-rebuild
+echo "rebuild-$(date +%s)" > .koyeb_force_rebuild
+git add .
+git commit -m "force rebuild"
+git push origin main

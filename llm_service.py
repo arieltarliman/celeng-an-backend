@@ -1,16 +1,14 @@
 import os
 import json
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-client = None
 
 if GEMINI_API_KEY:
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    genai.configure(api_key=GEMINI_API_KEY)
 else:
     print("CRITICAL WARNING: GEMINI_API_KEY is missing.")
 
@@ -22,11 +20,11 @@ Analyze the image and return a JSON object with these exact fields:
 - items (array): Each item has {name, qty, price, total}
 - total_amount (integer): Grand total in smallest currency unit
 
-Return ONLY valid JSON. No explanations.
+Return ONLY valid JSON. No explanations or markdown.
 """
 
 def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
-    if not client:
+    if not GEMINI_API_KEY:
         return {
             "merchant": "CONFIG ERROR",
             "date": "2025-01-01",
@@ -36,25 +34,26 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
         }
 
     try:
-        # FIX: Use keyword arguments for Part methods
-        response = client.models.generate_content(
-            model="models/gemini-1.5-flash",
-            contents=[
-                types.Part.from_text(text=PROMPT),
-                types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-            ],
-            config=types.GenerateContentConfig(
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        
+        image_part = {
+            "mime_type": mime_type,
+            "data": image_bytes
+        }
+        
+        response = model.generate_content(
+            [PROMPT, image_part],
+            generation_config=genai.GenerationConfig(
                 response_mime_type="application/json"
             )
         )
 
         raw_json = response.text.strip()
 
-        # Clean markdown code blocks if present
         if raw_json.startswith("```json"):
-            raw_json = raw_json.replace("```json", "").replace("```", "")
+            raw_json = raw_json.replace("```json", "").replace("```", "").strip()
         if raw_json.startswith("```"):
-            raw_json = raw_json.replace("```", "")
+            raw_json = raw_json.replace("```", "").strip()
 
         return json.loads(raw_json)
 
