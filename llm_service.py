@@ -8,8 +8,7 @@ load_dotenv()
 
 # 1. Setup the Client
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-client = None
-client = genai.Client(api_key=GEMINI_API_KEY, default_model="gemini-1.5-flash")
+client = genai.Client(api_key=GEMINI_API_KEY, api_version="v1")
 
 if GEMINI_API_KEY:
     # We explicitly set the version to 'v1alpha' if v1beta fails, 
