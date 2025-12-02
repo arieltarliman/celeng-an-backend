@@ -47,6 +47,9 @@ class ScanResult(BaseModel):
     merchant: str
     date: str
     items: List[ReceiptItem]
+    subtotal: int
+    tax: int
+    service: int
     total_amount: int
     image_url: Optional[str] = None 
 
@@ -131,9 +134,12 @@ async def save_transaction(
         "user_id": user_id,
         "merchant_name": data.merchant,
         "receipt_date": data.date,
+        "subtotal": data.subtotal,
+        "tax_amount": data.tax,
+        "service_charge": data.service,
         "total_amount": data.total_amount,
         "item_count": len(data.items),
-        "image_url": data.image_url # Now this will actually contain the URL!
+        "image_url": data.image_url
     }
 
     try:

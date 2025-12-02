@@ -24,6 +24,9 @@ Return ONLY a valid JSON object with this EXACT structure:
   "items": [
     {"name": "Item Name", "qty": 1, "price": 10000, "total": 10000}
   ],
+  "subtotal": 10000,
+  "tax": 0,
+  "service": 0,
   "total_amount": 10000
 }
 
@@ -31,10 +34,14 @@ Rules:
 - merchant: Store/restaurant name as string
 - date: Transaction date in YYYY-MM-DD format
 - items: Array of objects, each with name (string), qty (integer), price (integer per unit), total (integer = qty * price)
-- total_amount: Grand total as integer
+- subtotal: Sum of all items before tax and service (integer)
+- tax: Tax amount in smallest currency unit (integer, not percentage). If no tax, use 0
+- service: Service charge amount in smallest currency unit (integer, not percentage). If no service charge, use 0
+- total_amount: Grand total as integer (subtotal + tax + service)
 - All prices in smallest currency unit (no decimals, no currency symbols)
 - If qty is not visible, assume 1
 - If date is not visible, use "2025-01-01"
+- Extract the actual tax/service VALUES (e.g., 5000), NOT percentages (e.g., 10%)
 
 Return ONLY the JSON object. No markdown, no explanations.
 """
@@ -45,6 +52,9 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
             "merchant": "CONFIG ERROR",
             "date": "2025-01-01",
             "items": [],
+            "subtotal": 0,
+            "tax": 0,
+            "service": 0,
             "total_amount": 0,
             "error_details": "Missing GEMINI_API_KEY"
         }
@@ -79,6 +89,9 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
             "merchant": parsed.get("merchant", "Unknown"),
             "date": parsed.get("date", "2025-01-01"),
             "items": [],
+            "subtotal": int(parsed.get("subtotal", 0) or 0),
+            "tax": int(parsed.get("tax", 0) or 0),
+            "service": int(parsed.get("service", parsed.get("service_charge", 0)) or 0),
             "total_amount": int(parsed.get("total_amount", 0) or 0),
             "error_details": None
         }
@@ -100,6 +113,9 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
             "merchant": "PARSE ERROR",
             "date": "2025-01-01",
             "items": [],
+            "subtotal": 0,
+            "tax": 0,
+            "service": 0,
             "total_amount": 0,
             "error_details": f"Invalid JSON from AI: {str(e)}"
         }
@@ -109,6 +125,9 @@ def ask_gemini(image_bytes: bytes, mime_type: str = "image/jpeg"):
             "merchant": "SCAN FAILED",
             "date": "2025-01-01",
             "items": [],
+            "subtotal": 0,
+            "tax": 0,
+            "service": 0,
             "total_amount": 0,
             "error_details": str(e)
         }
